@@ -25,7 +25,7 @@
 		>
 			<option value="">Select a measurement...</option>
 			{#each measurements as m}
-				<option value={m.filename}>{m.measurement} ({m.unit})</option>
+				<option value={m.filename}>{m.measurement} ({m.unit.trim()})</option>
 			{/each}
 		</select>
 	</label>

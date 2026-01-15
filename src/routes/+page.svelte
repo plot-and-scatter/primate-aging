@@ -35,7 +35,7 @@
 		subjectSpecies = subjectsData.subjectSpecies;
 		allSpecies = subjectsData.allSpecies;
 		selectedSpecies = new Set(subjectsData.allSpecies);
-		measurements = measurementsData;
+		measurements = measurementsData.sort((a, b) => a.measurement.localeCompare(b.measurement));
 	}
 
 	function handleMeasurementSelect(filename: string) {
@@ -67,7 +67,13 @@
 		currentRows = lines.slice(1).map((line) => line.split(','));
 	}
 
-	function extractChartData(data: ProcessedSubjectData[], speciesFilter: Set<string>): DataPoint[] {
+	type ChartDatasets = {
+		points: DataPoint[];
+		median: DataPoint[];
+		mean: DataPoint[];
+	};
+
+	function extractChartData(data: ProcessedSubjectData[], speciesFilter: Set<string>): ChartDatasets {
 		// Single pass: filter subjects and collect their point arrays
 		const filteredItems: ProcessedSubjectData[] = [];
 		let totalPoints = 0;
@@ -80,19 +86,54 @@
 			}
 		}
 
-		if (totalPoints === 0) return [];
+		if (totalPoints === 0) return { points: [], median: [], mean: [] };
 
 		// Pre-allocate and fill (no more species checking needed)
-		const result = new Array(totalPoints);
+		const points = new Array(totalPoints);
 		let idx = 0;
 		for (let i = 0; i < filteredItems.length; i++) {
-			const points = filteredItems[i].dataPoints;
-			for (let j = 0; j < points.length; j++) {
-				result[idx++] = points[j];
+			const pointsArray = filteredItems[i].dataPoints;
+			for (let j = 0; j < pointsArray.length; j++) {
+				points[idx++] = pointsArray[j];
 			}
 		}
 
-		return result;
+		// Calculate median and mean per age
+		const pointsByAge = new Map<number, number[]>();
+		for (let i = 0; i < points.length; i++) {
+			const point = points[i];
+			if (!pointsByAge.has(point.x)) {
+				pointsByAge.set(point.x, []);
+			}
+			pointsByAge.get(point.x)!.push(point.y);
+		}
+
+		const medianPoints: DataPoint[] = [];
+		const meanPoints: DataPoint[] = [];
+
+		for (const [age, values] of pointsByAge) {
+			// Calculate mean
+			let sum = 0;
+			for (let i = 0; i < values.length; i++) {
+				sum += values[i];
+			}
+			const mean = sum / values.length;
+			meanPoints.push({ x: age, y: mean });
+
+			// Calculate median
+			const sorted = values.slice().sort((a, b) => a - b);
+			const mid = Math.floor(sorted.length / 2);
+			const median = sorted.length % 2 === 0
+				? (sorted[mid - 1] + sorted[mid]) / 2
+				: sorted[mid];
+			medianPoints.push({ x: age, y: median });
+		}
+
+		// Sort median and mean points by age for better visualization
+		medianPoints.sort((a, b) => a.x - b.x);
+		meanPoints.sort((a, b) => a.x - b.x);
+
+		return { points, median: medianPoints, mean: meanPoints };
 	}
 
 	function toggleSpecies(species: string) {
