@@ -26,38 +26,46 @@
 
 		// Do the actual work without tracking
 		untrack(() => {
-			if (chart) {
-				chart.destroy();
-				chart = null;
-			}
+			const chartStart = performance.now();
 
-			const plainData = JSON.parse(JSON.stringify(currentData));
-
-			chart = new Chart(canvas, {
-				type: 'scatter',
-				data: {
-					datasets: [
-						{
-							label: currentLabel,
-							data: plainData,
-							backgroundColor: 'rgba(59, 130, 246, 0.5)',
-							pointRadius: 2
-						}
-					]
-				},
-				options: {
-					responsive: true,
-					maintainAspectRatio: false,
-					scales: {
-						x: {
-							title: { display: true, text: 'Age (years)' }
-						},
-						y: {
-							title: { display: true, text: currentYAxisLabel }
+			if (!chart) {
+				// Create chart only once
+				console.log('🎨 Creating new chart with', currentData.length, 'points');
+				chart = new Chart(canvas, {
+					type: 'scatter',
+					data: {
+						datasets: [
+							{
+								label: currentLabel,
+								data: currentData,
+								backgroundColor: 'rgba(59, 130, 246, 0.5)',
+								pointRadius: 2
+							}
+						]
+					},
+					options: {
+						responsive: true,
+						maintainAspectRatio: false,
+						animation: false,
+						scales: {
+							x: {
+								title: { display: true, text: 'Age (years)' }
+							},
+							y: {
+								title: { display: true, text: currentYAxisLabel }
+							}
 						}
 					}
+				});
+			} else {
+				// Update existing chart
+				chart.data.datasets[0].data = currentData;
+				chart.data.datasets[0].label = currentLabel;
+				if (chart.options.scales?.y && 'title' in chart.options.scales.y) {
+					chart.options.scales.y.title = { display: true, text: currentYAxisLabel };
 				}
-			});
+				chart.update('none'); // Update without animation for speed
+			}
 		});
 
 		return () => {

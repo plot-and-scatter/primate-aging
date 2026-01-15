@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import MeasurementDropdown from '$lib/components/MeasurementDropdown.svelte';
 	import SpeciesFilter from '$lib/components/SpeciesFilter.svelte';
 	import ScatterChart from '$lib/components/ScatterChart.svelte';
@@ -8,10 +9,22 @@
 	let measurements: Measurement[] = $state([]);
 	let selected: string = $state('');
 	let preview: string = $state('');
-	let chartData: DataPoint[] = $state([]);
 
 	let allSpecies: string[] = $state([]);
 	let selectedSpecies: Set<string> = $state(new Set());
+	let subjectSpecies: Map<string, string> = new Map();
+
+	// Store raw data for preview
+	let currentHeaders: string[] = $state([]);
+	let currentRows: string[][] = $state([]);
+
+	// Pre-processed data for efficient filtering
+	type ProcessedSubjectData = {
+		subject: string;
+		species: string;
+		dataPoints: DataPoint[];
+	};
+	let processedData: ProcessedSubjectData[] = $state([]);
 
 	async function init() {
 		const [subjectsData, measurementsData] = await Promise.all([
@@ -19,6 +32,7 @@
 			loadMeasurements()
 		]);
 
+		subjectSpecies = subjectsData.subjectSpecies;
 		allSpecies = subjectsData.allSpecies;
 		selectedSpecies = new Set(subjectsData.allSpecies);
 		measurements = measurementsData;
@@ -32,37 +46,53 @@
 	async function loadFile(filename: string) {
 		if (!filename) {
 			preview = '';
-			chartData = [];
+			currentHeaders = [];
+			currentRows = [];
+			processedData = [];
 			return;
 		}
 
-		const res = await fetch(`/data/${filename}`);
-		const text = await res.text();
+		// Load pre-processed JSON instead of CSV
+		const jsonFilename = filename.replace('.csv', '.json');
+		const res = await fetch(`/data-optimized/${jsonFilename}`);
+		const data: ProcessedSubjectData[] = await res.json();
+		processedData = data;
+
+		// Still load CSV for preview display
+		const csvRes = await fetch(`/data/${filename}`);
+		const text = await csvRes.text();
 		const lines = text.trim().split('\n');
 		preview = lines.slice(0, 6).join('\n');
+		currentHeaders = lines[0].split(',');
+		currentRows = lines.slice(1).map((line) => line.split(','));
+	}
 
-		// Parse CSV and extract scatter data (no filtering)
-		const headers = lines[0].split(',');
-		const rows = lines.slice(1).map((line) => line.split(','));
+	function extractChartData(data: ProcessedSubjectData[], speciesFilter: Set<string>): DataPoint[] {
+		// Single pass: filter subjects and collect their point arrays
+		const filteredItems: ProcessedSubjectData[] = [];
+		let totalPoints = 0;
 
-		const ageColumns = headers
-			.map((h, i) => ({ header: h, index: i }))
-			.filter(({ header }) => header.match(/^y\d/));
-
-		const points: DataPoint[] = [];
-		for (const row of rows) {
-			for (const { header, index } of ageColumns) {
-				const value = row[index];
-				if (value && value !== '') {
-					const age = parseFloat(header.slice(1));
-					const y = parseFloat(value);
-					if (!isNaN(age) && !isNaN(y)) {
-						points.push({ x: age, y });
-					}
-				}
+		for (let i = 0; i < data.length; i++) {
+			const item = data[i];
+			if (speciesFilter.has(item.species)) {
+				filteredItems.push(item);
+				totalPoints += item.dataPoints.length;
 			}
 		}
-		chartData = points;
+
+		if (totalPoints === 0) return [];
+
+		// Pre-allocate and fill (no more species checking needed)
+		const result = new Array(totalPoints);
+		let idx = 0;
+		for (let i = 0; i < filteredItems.length; i++) {
+			const points = filteredItems[i].dataPoints;
+			for (let j = 0; j < points.length; j++) {
+				result[idx++] = points[j];
+			}
+		}
+
+		return result;
 	}
 
 	function toggleSpecies(species: string) {
@@ -92,8 +122,20 @@
 	});
 
 	let selectedMeasurement = $derived(measurements.find((m) => m.filename === selected));
-	let chartLabel = $derived(selectedMeasurement ? `${selectedMeasurement.measurement} (${selectedMeasurement.unit})` : selected);
+	let chartLabel = $derived(
+		selectedMeasurement ? `${selectedMeasurement.measurement} (${selectedMeasurement.unit})` : selected
+	);
 	let yAxisLabel = $derived(selectedMeasurement?.unit || 'Value');
+
+	// Efficiently filter pre-processed data when species selection changes
+	let chartData = $derived.by(() => {
+		// Read reactive dependencies
+		const data = processedData;
+		const filter = selectedSpecies;
+
+		// Do computation without tracking to avoid proxy overhead
+		return untrack(() => extractChartData(data, filter));
+	});
 </script>
 
 <div class="p-8 max-w-4xl mx-auto">
