@@ -6,7 +6,11 @@
       "Bash(nvm list:*)",
       "Bash(nvm alias:*)",
       "Bash(nvm use:*)",
-      "Bash(source ~/.nvm/nvm.sh)"
+      "Bash(source ~/.nvm/nvm.sh)",
+      "WebSearch",
+      "WebFetch(domain:next.shadcn-svelte.com)",
+      "WebFetch(domain:shadcn-svelte.com)",
+      "Bash(npx shadcn-svelte@latest:*)"
     ]
   }
 }
