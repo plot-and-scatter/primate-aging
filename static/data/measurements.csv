@@ -1,0 +1,67 @@
+filename,measurement,unit
+primateCPK.csv,CPK,U/L
+primateGGT.csv,GGT,IU/L
+primateHDL.csv,High Density Lipoprotein,mg/dL
+primateLDL.csv,Low Density Lipoprotein,mg/dL
+primateMCH.csv,Mean Corpuscular Hemoglobin,picograms
+primateMCHC.csv,Mean Corpuscular Hemoglobin C,g/dL
+primateMCV.csv,Mean Corpuscular Volume,fL
+primateRBC.csv,Red Blood Cells,10^6/mm^3
+primatealb-globratio.csv,Albumin/Globulin Ratio,ratio
+primatealb-protratio.csv,Albumin/Protein Ratio,ratio
+primatealbumin.csv,Albumin,g/dL
+primatealkalinephosphatase.csv,Alkaline Phosphatase,IU/L
+primateamylase.csv,Amylase,U/L
+primateaxillary.csv,Axillary Body Temperature,degrees Celsius
+primatebasophil.csv,Basophils-Abs,mm^3
+primatebasophilpercent.csv,Basophils-%,%
+primatebicarbonate.csv,Bicarbonate,mmol/L
+primatebilirubind.csv,Bilirubin-Direct,mg/dL
+primatebilirubint.csv,Bilirubin-Total,mg/dL
+primatebonethickness.csv,Bone Thickness,% cortical area
+primatebun-creatratio.csv,Bun/Creat Ratio,ratio
+primatebun.csv,Blood Urea Nitrogen,mg/dL
+primatecalcium.csv,Calcium,mg/dL
+primatechloride.csv,Chloride,mmol/L
+primatecholesterol.csv,Cholesterol,mg/dL
+primateco2.csv,Carbon Dioxide,mmol/L
+primatecreatinine.csv,Creatinine,mg/dL
+primatediastolic.csv,Diastolic Blood Pressure,
+primateeosinophilpercent.csv,Eosinophils-%,%
+primateesoinophil.csv,Eosinophils-Abs,mm^3
+primatefibrinogen.csv,Fibrinogen,mg/dL
+primatefingernail.csv,Fingernail Growth Rate,mm/day
+primatefructosamine.csv,Fructosamine,μmol/L
+primateglobulin.csv,Globulin,g/dL
+primateglucose.csv,Glucose,mg/dL
+primateglycohemoglobin.csv,Glycosylated Hemoglobin,% of total hemoglobin
+primateheartrate.csv,Heart Rate,beats per minute
+primatehematocrit.csv,Hematocrit,%
+primatehemoglobin.csv,Hemoglobin,g/dL
+primateiron.csv,Iron,μg/dL
+primatelacticdehydrogenase.csv,Lactic Dehydrogenase,IU/L
+primatelipase.csv,Lipase,U/L
+primatelymphocytes.csv,Lymphocytes-Abs,mm^3
+primatelymphocytespercent.csv,Lymphocytes-%,%
+primatemagnesium.csv,Magnesium,mg/dL
+primatemonocyte.csv,Monocytes-%,%
+primatemonocytepercent.csv,Monocytes-Abs,mm^3
+primateneutrophil.csv,Neutrophil-Seg-Abs,mm^3
+primateneutrophilband.csv,Neutrophil-Band-Abs,mm^3
+primateneutrophilbandpercent.csv,Neutrophil-Band-%,%
+primateneutrophilpercent.csv,Neutrophil-Seg-%,%
+primatephosphorous.csv,Phosphorus,mg/dL
+primateplatelets.csv,Platelets,ths/uL
+primatepotassium.csv,Potassium,mmol/L
+primaterectalbodytemp.csv,Rectal Body Temperature,degrees Fahrenheit
+primaterespiration.csv,Respiration Rate,breaths per minute
+primateserglutoxalo.csv,Ser Glut Oxaloacetic Transamin.,IU/L
+primateserglutpyruvic.csv,Ser Glut Pyruvic Transaminase,IU/L
+primatesodium.csv,Sodium,mmol/L
+primatesystolic.csv,Systolic Blood Pressure,
+primatetotalprotein.csv,Total Protein,g/dL
+primatetotalsolids.csv,Total Solids,g/dL
+primatetotalt4.csv,Total-T4,μg/dL
+primatetriglycerides.csv,Triglycerides,mg/dL
+primateuricacid.csv,Uric Acid,mg/dL
+primatewbc.csv,White Blood Cells,mm^-3

@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3:*)",
+      "Bash(npm install:*)",
+      "Bash(nvm list:*)",
+      "Bash(nvm alias:*)",
+      "Bash(nvm use:*)",
+      "Bash(source ~/.nvm/nvm.sh)"
+    ]
+  }
+}
