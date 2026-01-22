@@ -31,6 +31,11 @@
 		allSpecies = subjectsData.allSpecies;
 		selectedSpecies = new Set(subjectsData.allSpecies);
 		measurements = measurementsData.sort((a, b) => a.measurement.localeCompare(b.measurement));
+
+		// Select the first measurement by default
+		if (measurements.length > 0) {
+			handleMeasurementSelect(measurements[0].filename);
+		}
 	}
 
 	function handleMeasurementSelect(filename: string) {

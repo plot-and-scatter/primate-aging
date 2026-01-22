@@ -89,11 +89,18 @@
 								zoom: {
 									wheel: { enabled: true },
 									pinch: { enabled: true },
+									drag: {
+										enabled: true,
+										backgroundColor: 'rgba(59, 130, 246, 0.2)',
+										borderColor: 'rgba(59, 130, 246, 0.8)',
+										borderWidth: 1
+									},
 									mode: 'xy'
 								},
 								pan: {
 									enabled: true,
-									mode: 'xy'
+									mode: 'xy',
+									modifierKey: 'shift'
 								}
 							}
 						},

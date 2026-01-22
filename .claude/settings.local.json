@@ -10,7 +10,8 @@
       "WebSearch",
       "WebFetch(domain:next.shadcn-svelte.com)",
       "WebFetch(domain:shadcn-svelte.com)",
-      "Bash(npx shadcn-svelte@latest:*)"
+      "Bash(npx shadcn-svelte@latest:*)",
+      "Bash(npm ls:*)"
     ]
   }
 }
