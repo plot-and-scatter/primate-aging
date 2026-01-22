@@ -6,7 +6,9 @@ export default defineConfig({
 	plugins: [tailwindcss(), sveltekit()],
 	server: {
 		watch: {
-			ignored: ['**/data/**', '**/data-optimized/**']
+			usePolling: true,
+			interval: 300,
+			ignored: ['**/node_modules/**', '**/data/**', '**/data-optimized/**', '**/.git/**']
 		}
 	}
 });
