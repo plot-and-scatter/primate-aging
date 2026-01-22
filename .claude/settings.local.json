@@ -16,7 +16,9 @@
       "Bash(npm run check:*)",
       "Bash(xxd:*)",
       "Bash(perl:*)",
-      "Bash(awk:*)"
+      "Bash(awk:*)",
+      "Bash(npx wrangler:*)",
+      "Bash(npm run build:*)"
     ]
   }
 }
