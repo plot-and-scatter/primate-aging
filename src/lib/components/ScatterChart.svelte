@@ -137,7 +137,7 @@
 </script>
 
 <div>
-	<div class="h-96">
+	<div class="h-96 xl:h-[32rem]">
 		<canvas bind:this={canvas}></canvas>
 	</div>
 	<div class="flex justify-between items-center mt-2">

@@ -11,7 +11,9 @@
       "WebFetch(domain:next.shadcn-svelte.com)",
       "WebFetch(domain:shadcn-svelte.com)",
       "Bash(npx shadcn-svelte@latest:*)",
-      "Bash(npm ls:*)"
+      "Bash(npm ls:*)",
+      "Bash(head:*)",
+      "Bash(npm run check:*)"
     ]
   }
 }

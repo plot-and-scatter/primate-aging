@@ -56,26 +56,62 @@ export async function loadMeasurements(): Promise<Measurement[]> {
 	});
 }
 
+export type SubjectData = {
+	species: string;
+	sex: string;
+	socialEnvironment: string;
+	housing: string;
+	diet: string;
+};
+
 export async function loadSubjects(): Promise<{
-	subjectSpecies: Map<string, string>;
-	allSpecies: string[];
+	subjects: Map<string, SubjectData>;
+	filterOptions: {
+		species: string[];
+		sex: string[];
+		socialEnvironment: string[];
+		housing: string[];
+		diet: string[];
+	};
 }> {
 	const res = await fetch('/data/subjects.csv');
 	const text = await res.text();
 	const lines = text.trim().split('\n');
-	const speciesSet = new Set<string>();
 
-	const map = new Map<string, string>();
+	const speciesSet = new Set<string>();
+	const sexSet = new Set<string>();
+	const socialEnvironmentSet = new Set<string>();
+	const housingSet = new Set<string>();
+	const dietSet = new Set<string>();
+
+	const subjects = new Map<string, SubjectData>();
 	for (const line of lines.slice(1)) {
 		const values = line.split(',');
 		const subject = values[0];
-		const species = values[4];
-		map.set(subject, species);
-		if (species) speciesSet.add(species);
+		const data: SubjectData = {
+			species: values[4],
+			sex: values[5],
+			socialEnvironment: values[6],
+			housing: values[7],
+			diet: values[8]
+		};
+		subjects.set(subject, data);
+
+		if (data.species) speciesSet.add(data.species);
+		if (data.sex) sexSet.add(data.sex);
+		if (data.socialEnvironment) socialEnvironmentSet.add(data.socialEnvironment);
+		if (data.housing) housingSet.add(data.housing);
+		if (data.diet) dietSet.add(data.diet);
 	}
 
 	return {
-		subjectSpecies: map,
-		allSpecies: Array.from(speciesSet).sort()
+		subjects,
+		filterOptions: {
+			species: Array.from(speciesSet).sort(),
+			sex: Array.from(sexSet).sort(),
+			socialEnvironment: Array.from(socialEnvironmentSet).sort(),
+			housing: Array.from(housingSet).sort(),
+			diet: Array.from(dietSet).sort()
+		}
 	};
 }

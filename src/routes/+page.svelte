@@ -1,17 +1,34 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import MeasurementDropdown from '$lib/components/MeasurementDropdown.svelte';
-	import SpeciesFilter from '$lib/components/SpeciesFilter.svelte';
+	import FilterGroup from '$lib/components/FilterGroup.svelte';
 	import ScatterChart from '$lib/components/ScatterChart.svelte';
 	import type { Measurement, DataPoint } from '$lib/types';
-	import { loadMeasurements, loadSubjects } from '$lib/csv-utils';
+	import { loadMeasurements, loadSubjects, type SubjectData } from '$lib/csv-utils';
 
 	let measurements: Measurement[] = $state([]);
 	let selected: string = $state('');
 
-	let allSpecies: string[] = $state([]);
-	let selectedSpecies: Set<string> = $state(new Set());
-	let subjectSpecies: Map<string, string> = new Map();
+	// Subject data
+	let subjects: Map<string, SubjectData> = new Map();
+
+	// Filter options
+	let filterOptions = $state({
+		species: [] as string[],
+		sex: [] as string[],
+		socialEnvironment: [] as string[],
+		housing: [] as string[],
+		diet: [] as string[]
+	});
+
+	// Selected filters
+	let selectedFilters = $state({
+		species: new Set<string>(),
+		sex: new Set<string>(),
+		socialEnvironment: new Set<string>(),
+		housing: new Set<string>(),
+		diet: new Set<string>()
+	});
 
 	// Pre-processed data for efficient filtering
 	type ProcessedSubjectData = {
@@ -27,9 +44,18 @@
 			loadMeasurements()
 		]);
 
-		subjectSpecies = subjectsData.subjectSpecies;
-		allSpecies = subjectsData.allSpecies;
-		selectedSpecies = new Set(subjectsData.allSpecies);
+		subjects = subjectsData.subjects;
+		filterOptions = subjectsData.filterOptions;
+
+		// Select all options by default
+		selectedFilters = {
+			species: new Set(filterOptions.species),
+			sex: new Set(filterOptions.sex),
+			socialEnvironment: new Set(filterOptions.socialEnvironment),
+			housing: new Set(filterOptions.housing),
+			diet: new Set(filterOptions.diet)
+		};
+
 		measurements = measurementsData.sort((a, b) => a.measurement.localeCompare(b.measurement));
 
 		// Select the first measurement by default
@@ -62,14 +88,30 @@
 		mean: DataPoint[];
 	};
 
-	function extractChartData(data: ProcessedSubjectData[], speciesFilter: Set<string>): ChartDatasets {
+	type Filters = typeof selectedFilters;
+
+	function extractChartData(
+		data: ProcessedSubjectData[],
+		subjectMap: Map<string, SubjectData>,
+		filters: Filters
+	): ChartDatasets {
 		// Single pass: filter subjects and collect their point arrays
 		const filteredItems: ProcessedSubjectData[] = [];
 		let totalPoints = 0;
 
 		for (let i = 0; i < data.length; i++) {
 			const item = data[i];
-			if (speciesFilter.has(item.species)) {
+			const subjectData = subjectMap.get(item.subject);
+			if (!subjectData) continue;
+
+			// Check all filters
+			if (
+				filters.species.has(subjectData.species) &&
+				filters.sex.has(subjectData.sex) &&
+				filters.socialEnvironment.has(subjectData.socialEnvironment) &&
+				filters.housing.has(subjectData.housing) &&
+				filters.diet.has(subjectData.diet)
+			) {
 				filteredItems.push(item);
 				totalPoints += item.dataPoints.length;
 			}
@@ -125,22 +167,22 @@
 		return { points, median: medianPoints, mean: meanPoints };
 	}
 
-	function toggleSpecies(species: string) {
-		const newSet = new Set(selectedSpecies);
-		if (newSet.has(species)) {
-			newSet.delete(species);
+	function toggleFilter(filterKey: keyof Filters, value: string) {
+		const newSet = new Set(selectedFilters[filterKey]);
+		if (newSet.has(value)) {
+			newSet.delete(value);
 		} else {
-			newSet.add(species);
+			newSet.add(value);
 		}
-		selectedSpecies = newSet;
+		selectedFilters = { ...selectedFilters, [filterKey]: newSet };
 	}
 
-	function selectAllSpecies() {
-		selectedSpecies = new Set(allSpecies);
+	function selectAll(filterKey: keyof Filters) {
+		selectedFilters = { ...selectedFilters, [filterKey]: new Set(filterOptions[filterKey]) };
 	}
 
-	function selectNoneSpecies() {
-		selectedSpecies = new Set();
+	function selectNone(filterKey: keyof Filters) {
+		selectedFilters = { ...selectedFilters, [filterKey]: new Set<string>() };
 	}
 
 	let initialized = false;
@@ -157,28 +199,64 @@
 	);
 	let yAxisLabel = $derived(selectedMeasurement?.unit || 'Value');
 
-	// Efficiently filter pre-processed data when species selection changes
+	// Efficiently filter pre-processed data when filter selection changes
 	let chartData = $derived.by(() => {
 		// Read reactive dependencies
 		const data = processedData;
-		const filter = selectedSpecies;
+		const subjectMap = subjects;
+		const filters = selectedFilters;
 
 		// Do computation without tracking to avoid proxy overhead
-		return untrack(() => extractChartData(data, filter));
+		return untrack(() => extractChartData(data, subjectMap, filters));
 	});
 </script>
 
-<div class="p-8 max-w-4xl mx-auto">
-	<h1 class="text-2xl font-bold mb-4">Primate Aging Data</h1>
-
-	<div class="flex flex-wrap gap-6 mb-6">
+<div class="p-8 max-w-7xl mx-auto">
+	<div class="flex flex-wrap items-center gap-4 mb-6">
+		<h1 class="text-2xl font-bold">Primate Aging Data</h1>
 		<MeasurementDropdown {measurements} {selected} onSelect={handleMeasurementSelect} />
-		<SpeciesFilter
-			{allSpecies}
-			selected={selectedSpecies}
-			onToggle={toggleSpecies}
-			onSelectAll={selectAllSpecies}
-			onSelectNone={selectNoneSpecies}
+	</div>
+
+	<div class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
+		<FilterGroup
+			label="Species"
+			options={filterOptions.species}
+			selected={selectedFilters.species}
+			onToggle={(v) => toggleFilter('species', v)}
+			onSelectAll={() => selectAll('species')}
+			onSelectNone={() => selectNone('species')}
+		/>
+		<FilterGroup
+			label="Sex"
+			options={filterOptions.sex}
+			selected={selectedFilters.sex}
+			onToggle={(v) => toggleFilter('sex', v)}
+			onSelectAll={() => selectAll('sex')}
+			onSelectNone={() => selectNone('sex')}
+		/>
+		<FilterGroup
+			label="Social environment"
+			options={filterOptions.socialEnvironment}
+			selected={selectedFilters.socialEnvironment}
+			onToggle={(v) => toggleFilter('socialEnvironment', v)}
+			onSelectAll={() => selectAll('socialEnvironment')}
+			onSelectNone={() => selectNone('socialEnvironment')}
+		/>
+		<FilterGroup
+			label="Housing"
+			options={filterOptions.housing}
+			selected={selectedFilters.housing}
+			onToggle={(v) => toggleFilter('housing', v)}
+			onSelectAll={() => selectAll('housing')}
+			onSelectNone={() => selectNone('housing')}
+		/>
+		<FilterGroup
+			label="Diet"
+			options={filterOptions.diet}
+			selected={selectedFilters.diet}
+			onToggle={(v) => toggleFilter('diet', v)}
+			onSelectAll={() => selectAll('diet')}
+			onSelectNone={() => selectNone('diet')}
 		/>
 	</div>
 
