@@ -47,9 +47,9 @@
 		subjects = subjectsData.subjects;
 		filterOptions = subjectsData.filterOptions;
 
-		// Select all options by default
+		// Select defaults
 		selectedFilters = {
-			species: new Set(filterOptions.species),
+			species: new Set(['Chimpanzee']),
 			sex: new Set(filterOptions.sex),
 			socialEnvironment: new Set(filterOptions.socialEnvironment),
 			housing: new Set(filterOptions.housing),
@@ -167,22 +167,8 @@
 		return { points, median: medianPoints, mean: meanPoints };
 	}
 
-	function toggleFilter(filterKey: keyof Filters, value: string) {
-		const newSet = new Set(selectedFilters[filterKey]);
-		if (newSet.has(value)) {
-			newSet.delete(value);
-		} else {
-			newSet.add(value);
-		}
-		selectedFilters = { ...selectedFilters, [filterKey]: newSet };
-	}
-
-	function selectAll(filterKey: keyof Filters) {
-		selectedFilters = { ...selectedFilters, [filterKey]: new Set(filterOptions[filterKey]) };
-	}
-
-	function selectNone(filterKey: keyof Filters) {
-		selectedFilters = { ...selectedFilters, [filterKey]: new Set<string>() };
+	function setFilter(filterKey: keyof Filters, values: Set<string>) {
+		selectedFilters = { ...selectedFilters, [filterKey]: values };
 	}
 
 	let initialized = false;
@@ -211,52 +197,40 @@
 	});
 </script>
 
-<div class="p-8 max-w-7xl mx-auto">
-	<div class="flex flex-wrap items-center gap-4 mb-6">
-		<h1 class="text-2xl font-bold">Primate Aging Data</h1>
-		<MeasurementDropdown {measurements} {selected} onSelect={handleMeasurementSelect} />
-	</div>
+<div class="p-4 lg:px-8 lg:py-4">
+	<h1 class="text-lg font-bold mb-3">Primate Aging Data</h1>
 
-	<div class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
+	<div class="flex flex-wrap items-center gap-3 mb-4">
+		<MeasurementDropdown {measurements} {selected} onSelect={handleMeasurementSelect} />
 		<FilterGroup
 			label="Species"
 			options={filterOptions.species}
 			selected={selectedFilters.species}
-			onToggle={(v) => toggleFilter('species', v)}
-			onSelectAll={() => selectAll('species')}
-			onSelectNone={() => selectNone('species')}
+			onChange={(v) => setFilter('species', v)}
 		/>
 		<FilterGroup
 			label="Sex"
 			options={filterOptions.sex}
 			selected={selectedFilters.sex}
-			onToggle={(v) => toggleFilter('sex', v)}
-			onSelectAll={() => selectAll('sex')}
-			onSelectNone={() => selectNone('sex')}
+			onChange={(v) => setFilter('sex', v)}
 		/>
 		<FilterGroup
-			label="Social environment"
+			label="Social"
 			options={filterOptions.socialEnvironment}
 			selected={selectedFilters.socialEnvironment}
-			onToggle={(v) => toggleFilter('socialEnvironment', v)}
-			onSelectAll={() => selectAll('socialEnvironment')}
-			onSelectNone={() => selectNone('socialEnvironment')}
+			onChange={(v) => setFilter('socialEnvironment', v)}
 		/>
 		<FilterGroup
 			label="Housing"
 			options={filterOptions.housing}
 			selected={selectedFilters.housing}
-			onToggle={(v) => toggleFilter('housing', v)}
-			onSelectAll={() => selectAll('housing')}
-			onSelectNone={() => selectNone('housing')}
+			onChange={(v) => setFilter('housing', v)}
 		/>
 		<FilterGroup
 			label="Diet"
 			options={filterOptions.diet}
 			selected={selectedFilters.diet}
-			onToggle={(v) => toggleFilter('diet', v)}
-			onSelectAll={() => selectAll('diet')}
-			onSelectNone={() => selectNone('diet')}
+			onChange={(v) => setFilter('diet', v)}
 		/>
 	</div>
 

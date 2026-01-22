@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Measurement } from '$lib/types';
+	import * as Select from '$lib/components/ui/select';
 
 	interface Props {
 		measurements: Measurement[];
@@ -9,24 +10,35 @@
 
 	let { measurements, selected, onSelect }: Props = $props();
 
-	function handleChange(e: Event) {
-		const target = e.target as HTMLSelectElement;
-		onSelect(target.value);
+	let value = $derived(
+		selected
+			? {
+					value: selected,
+					label: measurements.find((m) => m.filename === selected)
+						? `${measurements.find((m) => m.filename === selected)!.measurement} (${measurements.find((m) => m.filename === selected)!.unit.trim()})`
+						: selected
+				}
+			: undefined
+	);
+
+	function handleValueChange(newValue: { value: string; label?: string } | undefined) {
+		if (newValue?.value) {
+			onSelect(newValue.value);
+		}
 	}
 </script>
 
-<div class="block">
-	<label class="block mb-1 text-sm font-medium">
-		Select measurement:
-		<select
-			class="mt-1 block w-64 rounded-md border border-input bg-background px-3 py-2 text-sm"
-			value={selected}
-			onchange={handleChange}
-		>
-			<option value="">Select a measurement...</option>
-			{#each measurements as m}
-				<option value={m.filename}>{m.measurement} ({m.unit.trim()})</option>
-			{/each}
-		</select>
-	</label>
-</div>
+<Select.Root type="single" {value} onValueChange={handleValueChange}>
+	<Select.Trigger class="w-80 font-bold text-base">
+		{#if value}
+			{value.label}
+		{:else}
+			Select a measurement...
+		{/if}
+	</Select.Trigger>
+	<Select.Content>
+		{#each measurements as m}
+			<Select.Item value={m.filename} label="{m.measurement} ({m.unit.trim()})" />
+		{/each}
+	</Select.Content>
+</Select.Root>

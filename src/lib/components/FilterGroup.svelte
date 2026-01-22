@@ -1,32 +1,43 @@
 <script lang="ts">
+	import * as Select from '$lib/components/ui/select';
+
 	interface Props {
 		label: string;
 		options: string[];
 		selected: Set<string>;
-		onToggle: (value: string) => void;
-		onSelectAll: () => void;
-		onSelectNone: () => void;
+		onChange: (selected: Set<string>) => void;
 	}
 
-	let { label, options, selected, onToggle, onSelectAll, onSelectNone }: Props = $props();
+	let { label, options, selected, onChange }: Props = $props();
+
+	function handleValueChange(newValue: string[]) {
+		onChange(new Set(newValue));
+	}
 </script>
 
-<div class="block">
-	<div class="flex items-center gap-4 mb-2">
-		<span class="text-sm font-medium">{label} ({selected.size}/{options.length}):</span>
-		<button type="button" class="text-xs text-blue-600 hover:underline" onclick={onSelectAll}>All</button>
-		<button type="button" class="text-xs text-blue-600 hover:underline" onclick={onSelectNone}>None</button>
-	</div>
-	<div class="flex flex-col gap-1 max-h-32 overflow-y-auto">
+<Select.Root type="multiple" value={Array.from(selected)} onValueChange={handleValueChange}>
+	<Select.Trigger class="w-44 text-sm">
+		{#if selected.size === 1}
+			{[...selected][0]}
+		{:else}
+			{label} ({selected.size}/{options.length})
+		{/if}
+	</Select.Trigger>
+	<Select.Content>
+		<div class="flex gap-2 px-2 py-1.5 border-b mb-1">
+			<button
+				type="button"
+				class="text-xs text-blue-600 hover:underline"
+				onclick={() => onChange(new Set(options))}
+			>All</button>
+			<button
+				type="button"
+				class="text-xs text-blue-600 hover:underline"
+				onclick={() => onChange(new Set())}
+			>None</button>
+		</div>
 		{#each options as option}
-			<label class="flex items-center gap-1 text-sm">
-				<input
-					type="checkbox"
-					checked={selected.has(option)}
-					onchange={() => onToggle(option)}
-				/>
-				{option}
-			</label>
+			<Select.Item value={option} label={option} />
 		{/each}
-	</div>
-</div>
+	</Select.Content>
+</Select.Root>
