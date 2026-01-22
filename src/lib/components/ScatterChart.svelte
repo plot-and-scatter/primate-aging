@@ -25,14 +25,100 @@
 		data: ChartDatasets;
 		label: string;
 		yAxisLabel: string;
+		overlay?: ChartDatasets | null;
+		overlayLabel?: string;
+		overlayYAxisLabel?: string;
 	}
 
-	let { data, label, yAxisLabel }: Props = $props();
+	let { data, label, yAxisLabel, overlay = null, overlayLabel = 'Overlay', overlayYAxisLabel = '' }: Props = $props();
 
-	let totalPoints = $derived(data.points.length + data.median.length + data.mean.length);
+	let totalPoints = $derived(
+		data.points.length + data.median.length + data.mean.length +
+		(overlay ? overlay.points.length + overlay.median.length + overlay.mean.length : 0)
+	);
 
 	let canvas: HTMLCanvasElement;
 	let chart: Chart | null = null;
+
+	function buildDatasets(currentData: ChartDatasets, currentLabel: string, currentOverlay: ChartDatasets | null, currentOverlayLabel: string, useSecondYAxis: boolean) {
+		// Cool colors for base data (blue family)
+		// Legend order: Biomarker, Mean, Median (lower order = drawn first/behind)
+		const datasets: any[] = [
+			{
+				label: currentLabel,
+				data: currentData.points,
+				backgroundColor: 'rgba(59, 130, 246, 0.3)', // Blue
+				pointRadius: 2,
+				pointStyle: 'circle',
+				borderWidth: 0,
+				order: 1,
+				yAxisID: 'y'
+			},
+			{
+				label: 'Mean',
+				data: currentData.mean,
+				backgroundColor: 'rgba(34, 197, 94, 0.9)', // Bright green
+				borderColor: 'rgba(22, 128, 61, 1)', // Darker green
+				borderWidth: 1,
+				pointRadius: 5,
+				pointStyle: 'rect',
+				order: 2,
+				yAxisID: 'y'
+			},
+			{
+				label: 'Median',
+				data: currentData.median,
+				backgroundColor: 'rgba(139, 92, 246, 0.9)', // Purple/Violet
+				borderColor: 'rgba(91, 33, 182, 1)', // Darker purple
+				borderWidth: 1,
+				pointRadius: 5,
+				pointStyle: 'triangle',
+				order: 3,
+				yAxisID: 'y'
+			}
+		];
+
+		// Warm colors for overlay data (orange/red family)
+		if (currentOverlay) {
+			const overlayYAxis = useSecondYAxis ? 'y1' : 'y';
+			datasets.push(
+				{
+					label: currentOverlayLabel,
+					data: currentOverlay.points,
+					backgroundColor: 'rgba(249, 115, 22, 0.3)', // Orange
+					pointRadius: 2,
+					pointStyle: 'circle',
+					borderWidth: 0,
+					order: 4,
+					yAxisID: overlayYAxis
+				},
+				{
+					label: 'Overlay Mean',
+					data: currentOverlay.mean,
+					backgroundColor: 'rgba(245, 158, 11, 0.9)', // Amber/Yellow
+					borderColor: 'rgba(180, 83, 9, 1)', // Darker amber
+					borderWidth: 1,
+					pointRadius: 5,
+					pointStyle: 'rect',
+					order: 5,
+					yAxisID: overlayYAxis
+				},
+				{
+					label: 'Overlay Median',
+					data: currentOverlay.median,
+					backgroundColor: 'rgba(239, 68, 68, 0.9)', // Red
+					borderColor: 'rgba(153, 27, 27, 1)', // Darker red
+					borderWidth: 1,
+					pointRadius: 5,
+					pointStyle: 'triangle',
+					order: 6,
+					yAxisID: overlayYAxis
+				}
+			);
+		}
+
+		return datasets;
+	}
 
 	$effect(() => {
 		if (!canvas || !zoomReady) return;
@@ -41,41 +127,45 @@
 		const currentData = data;
 		const currentLabel = label;
 		const currentYAxisLabel = yAxisLabel;
+		const currentOverlay = overlay;
+		const currentOverlayLabel = overlayLabel;
+		const currentOverlayYAxisLabel = overlayYAxisLabel;
+
+		// Determine if we need a second y-axis (different measurements)
+		const useSecondYAxis = currentOverlay && currentOverlayYAxisLabel && currentOverlayYAxisLabel !== currentYAxisLabel;
 
 		// Do the actual work without tracking
 		untrack(() => {
-			const chartStart = performance.now();
+			const datasets = buildDatasets(currentData, currentLabel, currentOverlay, currentOverlayLabel, useSecondYAxis);
+
+			// Build scales config
+			const scales: any = {
+				x: {
+					title: { display: true, text: 'Age (years)' }
+				},
+				y: {
+					type: 'linear',
+					position: 'left',
+					title: { display: true, text: currentYAxisLabel }
+				}
+			};
+
+			if (useSecondYAxis) {
+				scales.y1 = {
+					type: 'linear',
+					position: 'right',
+					title: { display: true, text: currentOverlayYAxisLabel, color: 'rgba(249, 115, 22, 1)' },
+					grid: { drawOnChartArea: false },
+					ticks: { color: 'rgba(249, 115, 22, 0.8)' }
+				};
+			}
 
 			if (!chart) {
 				// Create chart only once
-				console.log('🎨 Creating new chart with', currentData.points.length, 'points');
+				console.log('Creating new chart with', currentData.points.length, 'points');
 				chart = new Chart(canvas, {
 					type: 'scatter',
-					data: {
-						datasets: [
-							{
-								label: currentLabel,
-								data: currentData.points,
-								backgroundColor: 'rgba(59, 130, 246, 0.3)',
-								pointRadius: 2,
-								order: 3
-							},
-							{
-								label: 'Median',
-								data: currentData.median,
-								backgroundColor: 'rgba(220, 38, 38, 0.5)',
-								pointRadius: 4,
-								order: 1
-							},
-							{
-								label: 'Mean',
-								data: currentData.mean,
-								backgroundColor: 'rgba(34, 197, 94, 0.5)',
-								pointRadius: 4,
-								order: 2
-							}
-						]
-					},
+					data: { datasets },
 					options: {
 						responsive: true,
 						maintainAspectRatio: false,
@@ -104,26 +194,14 @@
 								}
 							}
 						},
-						scales: {
-							x: {
-								title: { display: true, text: 'Age (years)' }
-							},
-							y: {
-								title: { display: true, text: currentYAxisLabel }
-							}
-						}
+						scales
 					}
 				});
 			} else {
 				// Update existing chart
-				chart.data.datasets[0].data = currentData.points;
-				chart.data.datasets[0].label = currentLabel;
-				chart.data.datasets[1].data = currentData.median;
-				chart.data.datasets[2].data = currentData.mean;
-				if (chart.options.scales?.y && 'title' in chart.options.scales.y) {
-					chart.options.scales.y.title = { display: true, text: currentYAxisLabel };
-				}
-				chart.update('none'); // Update without animation for speed
+				chart.data.datasets = datasets;
+				chart.options.scales = scales;
+				chart.update('none');
 			}
 		});
 

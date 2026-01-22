@@ -10,31 +10,23 @@
 
 	let { measurements, selected, onSelect }: Props = $props();
 
-	let value = $derived(
-		selected
-			? {
-					value: selected,
-					label: measurements.find((m) => m.filename === selected)
-						? `${measurements.find((m) => m.filename === selected)!.measurement} (${measurements.find((m) => m.filename === selected)!.unit.trim()})`
-						: selected
-				}
-			: undefined
+	let selectedMeasurement = $derived(measurements.find((m) => m.filename === selected));
+	let displayLabel = $derived(
+		selectedMeasurement
+			? `${selectedMeasurement.measurement} (${selectedMeasurement.unit.trim()})`
+			: 'Select a measurement...'
 	);
 
-	function handleValueChange(newValue: { value: string; label?: string } | undefined) {
-		if (newValue?.value) {
-			onSelect(newValue.value);
+	function handleValueChange(newValue: string) {
+		if (newValue && newValue !== selected) {
+			onSelect(newValue);
 		}
 	}
 </script>
 
-<Select.Root type="single" {value} onValueChange={handleValueChange}>
+<Select.Root type="single" value={selected} onValueChange={handleValueChange}>
 	<Select.Trigger class="w-80 font-bold text-base">
-		{#if value}
-			{value.label}
-		{:else}
-			Select a measurement...
-		{/if}
+		{displayLabel}
 	</Select.Trigger>
 	<Select.Content>
 		{#each measurements as m}

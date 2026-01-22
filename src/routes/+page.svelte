@@ -38,6 +38,18 @@
 	};
 	let processedData: ProcessedSubjectData[] = $state([]);
 
+	// Overlay state
+	let showOverlay = $state(false);
+	let overlaySelected: string = $state('');
+	let overlayFilters = $state({
+		species: new Set<string>(),
+		sex: new Set<string>(),
+		socialEnvironment: new Set<string>(),
+		housing: new Set<string>(),
+		diet: new Set<string>()
+	});
+	let overlayProcessedData: ProcessedSubjectData[] = $state([]);
+
 	async function init() {
 		const [subjectsData, measurementsData] = await Promise.all([
 			loadSubjects(),
@@ -80,6 +92,44 @@
 		const res = await fetch(`/data-optimized/${jsonFilename}`);
 		const data: ProcessedSubjectData[] = await res.json();
 		processedData = data;
+	}
+
+	// Overlay handlers
+	function handleOverlayMeasurementSelect(filename: string) {
+		overlaySelected = filename;
+		loadOverlayFile(filename);
+	}
+
+	async function loadOverlayFile(filename: string) {
+		if (!filename) {
+			overlayProcessedData = [];
+			return;
+		}
+
+		const jsonFilename = filename.replace('.csv', '.json');
+		const res = await fetch(`/data-optimized/${jsonFilename}`);
+		const data: ProcessedSubjectData[] = await res.json();
+		overlayProcessedData = data;
+	}
+
+	function addOverlay() {
+		showOverlay = true;
+		// Initialize overlay with same measurement and same filters as current selection
+		overlaySelected = selected;
+		overlayProcessedData = processedData;
+		overlayFilters = {
+			species: new Set(selectedFilters.species),
+			sex: new Set(selectedFilters.sex),
+			socialEnvironment: new Set(selectedFilters.socialEnvironment),
+			housing: new Set(selectedFilters.housing),
+			diet: new Set(selectedFilters.diet)
+		};
+	}
+
+	function removeOverlay() {
+		showOverlay = false;
+		overlaySelected = '';
+		overlayProcessedData = [];
 	}
 
 	type ChartDatasets = {
@@ -171,6 +221,10 @@
 		selectedFilters = { ...selectedFilters, [filterKey]: values };
 	}
 
+	function setOverlayFilter(filterKey: keyof Filters, values: Set<string>) {
+		overlayFilters = { ...overlayFilters, [filterKey]: values };
+	}
+
 	let initialized = false;
 	$effect(() => {
 		if (!initialized) {
@@ -195,12 +249,29 @@
 		// Do computation without tracking to avoid proxy overhead
 		return untrack(() => extractChartData(data, subjectMap, filters));
 	});
+
+	// Overlay chart data
+	let overlayMeasurement = $derived(measurements.find((m) => m.filename === overlaySelected));
+	let overlayLabel = $derived(
+		overlayMeasurement ? `${overlayMeasurement.measurement} (Overlay)` : 'Overlay'
+	);
+	let overlayYAxisLabel = $derived(overlayMeasurement?.unit || '');
+
+	let overlayData = $derived.by(() => {
+		if (!showOverlay) return null;
+
+		const data = overlayProcessedData;
+		const subjectMap = subjects;
+		const filters = overlayFilters;
+
+		return untrack(() => extractChartData(data, subjectMap, filters));
+	});
 </script>
 
 <div class="p-4 lg:px-8 lg:py-4">
 	<h1 class="text-lg font-bold mb-3">Primate Aging Data</h1>
 
-	<div class="flex flex-wrap items-center gap-3 mb-4">
+	<div class="flex flex-wrap items-center gap-3 mb-2 p-2 rounded border border-transparent">
 		<MeasurementDropdown {measurements} {selected} onSelect={handleMeasurementSelect} />
 		<FilterGroup
 			label="Species"
@@ -232,9 +303,68 @@
 			selected={selectedFilters.diet}
 			onChange={(v) => setFilter('diet', v)}
 		/>
+		{#if !showOverlay}
+			<button
+				onclick={addOverlay}
+				class="text-sm px-3 py-1.5 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded border border-orange-300"
+			>
+				+ Add overlay
+			</button>
+		{/if}
 	</div>
 
+	{#if showOverlay}
+		<div class="flex flex-wrap items-center gap-3 mb-4 p-2 bg-orange-50 rounded border border-orange-200">
+			<MeasurementDropdown {measurements} selected={overlaySelected} onSelect={handleOverlayMeasurementSelect} />
+			<FilterGroup
+				label="Species"
+				options={filterOptions.species}
+				selected={overlayFilters.species}
+				onChange={(v) => setOverlayFilter('species', v)}
+			/>
+			<FilterGroup
+				label="Sex"
+				options={filterOptions.sex}
+				selected={overlayFilters.sex}
+				onChange={(v) => setOverlayFilter('sex', v)}
+			/>
+			<FilterGroup
+				label="Social"
+				options={filterOptions.socialEnvironment}
+				selected={overlayFilters.socialEnvironment}
+				onChange={(v) => setOverlayFilter('socialEnvironment', v)}
+			/>
+			<FilterGroup
+				label="Housing"
+				options={filterOptions.housing}
+				selected={overlayFilters.housing}
+				onChange={(v) => setOverlayFilter('housing', v)}
+			/>
+			<FilterGroup
+				label="Diet"
+				options={filterOptions.diet}
+				selected={overlayFilters.diet}
+				onChange={(v) => setOverlayFilter('diet', v)}
+			/>
+			<button
+				onclick={removeOverlay}
+				class="text-sm px-2 py-1 text-red-600 hover:text-red-800 hover:bg-red-100 rounded"
+			>
+				Remove
+			</button>
+		</div>
+	{:else}
+		<div class="mb-4"></div>
+	{/if}
+
 	{#if selected}
-		<ScatterChart data={chartData} label={chartLabel} yAxisLabel={yAxisLabel} />
+		<ScatterChart
+			data={chartData}
+			label={chartLabel}
+			{yAxisLabel}
+			overlay={overlayData}
+			{overlayLabel}
+			{overlayYAxisLabel}
+		/>
 	{/if}
 </div>
