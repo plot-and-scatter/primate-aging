@@ -8,15 +8,10 @@
 
 	let measurements: Measurement[] = $state([]);
 	let selected: string = $state('');
-	let preview: string = $state('');
 
 	let allSpecies: string[] = $state([]);
 	let selectedSpecies: Set<string> = $state(new Set());
 	let subjectSpecies: Map<string, string> = new Map();
-
-	// Store raw data for preview
-	let currentHeaders: string[] = $state([]);
-	let currentRows: string[][] = $state([]);
 
 	// Pre-processed data for efficient filtering
 	type ProcessedSubjectData = {
@@ -45,9 +40,6 @@
 
 	async function loadFile(filename: string) {
 		if (!filename) {
-			preview = '';
-			currentHeaders = [];
-			currentRows = [];
 			processedData = [];
 			return;
 		}
@@ -57,14 +49,6 @@
 		const res = await fetch(`/data-optimized/${jsonFilename}`);
 		const data: ProcessedSubjectData[] = await res.json();
 		processedData = data;
-
-		// Still load CSV for preview display
-		const csvRes = await fetch(`/data/${filename}`);
-		const text = await csvRes.text();
-		const lines = text.trim().split('\n');
-		preview = lines.slice(0, 6).join('\n');
-		currentHeaders = lines[0].split(',');
-		currentRows = lines.slice(1).map((line) => line.split(','));
 	}
 
 	type ChartDatasets = {
@@ -195,10 +179,5 @@
 
 	{#if selected}
 		<ScatterChart data={chartData} label={chartLabel} yAxisLabel={yAxisLabel} />
-
-		<details class="mt-4">
-			<summary class="cursor-pointer text-sm text-gray-600">Raw data preview</summary>
-			<pre class="bg-gray-100 p-4 rounded overflow-x-auto text-sm mt-2">{preview}</pre>
-		</details>
 	{/if}
 </div>

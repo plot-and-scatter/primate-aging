@@ -1,9 +1,19 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
+	import { browser } from '$app/environment';
 	import { Chart, ScatterController, LinearScale, PointElement, Tooltip, Legend } from 'chart.js';
 	import type { DataPoint } from '$lib/types';
 
 	Chart.register(ScatterController, LinearScale, PointElement, Tooltip, Legend);
+
+	let zoomReady = $state(false);
+
+	if (browser) {
+		import('chartjs-plugin-zoom').then((mod) => {
+			Chart.register(mod.default);
+			zoomReady = true;
+		});
+	}
 
 	type ChartDatasets = {
 		points: DataPoint[];
@@ -25,7 +35,7 @@
 	let chart: Chart | null = null;
 
 	$effect(() => {
-		if (!canvas) return;
+		if (!canvas || !zoomReady) return;
 
 		// Read props to create dependencies
 		const currentData = data;
@@ -74,6 +84,17 @@
 							legend: {
 								display: true,
 								position: 'top'
+							},
+							zoom: {
+								zoom: {
+									wheel: { enabled: true },
+									pinch: { enabled: true },
+									mode: 'xy'
+								},
+								pan: {
+									enabled: true,
+									mode: 'xy'
+								}
 							}
 						},
 						scales: {
@@ -112,7 +133,15 @@
 	<div class="h-96">
 		<canvas bind:this={canvas}></canvas>
 	</div>
-	<div class="text-sm text-gray-600 mt-2 text-center">
-		Total data points: {totalPoints.toLocaleString()}
+	<div class="flex justify-between items-center mt-2">
+		<div class="text-sm text-gray-600">
+			Total data points: {totalPoints.toLocaleString()}
+		</div>
+		<button
+			onclick={() => chart?.resetZoom()}
+			class="text-sm px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded"
+		>
+			Reset Zoom
+		</button>
 	</div>
 </div>
