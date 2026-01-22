@@ -13,7 +13,10 @@
       "Bash(npx shadcn-svelte@latest:*)",
       "Bash(npm ls:*)",
       "Bash(head:*)",
-      "Bash(npm run check:*)"
+      "Bash(npm run check:*)",
+      "Bash(xxd:*)",
+      "Bash(perl:*)",
+      "Bash(awk:*)"
     ]
   }
 }

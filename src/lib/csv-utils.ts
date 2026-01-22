@@ -1,7 +1,7 @@
 import type { Measurement, DataPoint } from './types';
 
 export function parseCSV(text: string): { headers: string[]; rows: string[][] } {
-	const lines = text.trim().split('\n');
+	const lines = text.replace(/\r/g, '').trim().split('\n');
 	const headers = lines[0].split(',');
 	const rows = lines.slice(1).map((line) => line.split(','));
 	return { headers, rows };
@@ -44,7 +44,7 @@ export function extractScatterData(
 export async function loadMeasurements(): Promise<Measurement[]> {
 	const res = await fetch('/data/measurements.csv');
 	const text = await res.text();
-	const lines = text.trim().split('\n');
+	const lines = text.replace(/\r/g, '').trim().split('\n');
 
 	return lines.slice(1).map((line) => {
 		const values = line.split(',');
@@ -76,7 +76,7 @@ export async function loadSubjects(): Promise<{
 }> {
 	const res = await fetch('/data/subjects.csv');
 	const text = await res.text();
-	const lines = text.trim().split('\n');
+	const lines = text.replace(/\r/g, '').trim().split('\n');
 
 	const speciesSet = new Set<string>();
 	const sexSet = new Set<string>();
