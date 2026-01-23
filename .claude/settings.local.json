@@ -18,7 +18,9 @@
       "Bash(perl:*)",
       "Bash(awk:*)",
       "Bash(npx wrangler:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(npm search:*)",
+      "WebFetch(domain:www.npmjs.com)"
     ]
   }
 }

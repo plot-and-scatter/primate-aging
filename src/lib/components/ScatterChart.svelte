@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { browser } from '$app/environment';
-	import { Chart, ScatterController, LinearScale, PointElement, Tooltip, Legend } from 'chart.js';
+	import { Chart, ScatterController, LineController, LinearScale, PointElement, LineElement, Tooltip, Legend } from 'chart.js';
 	import type { DataPoint } from '$lib/types';
 
-	Chart.register(ScatterController, LinearScale, PointElement, Tooltip, Legend);
+	Chart.register(ScatterController, LineController, LinearScale, PointElement, LineElement, Tooltip, Legend);
 
 	let zoomReady = $state(false);
 
@@ -32,10 +32,8 @@
 
 	let { data, label, yAxisLabel, overlay = null, overlayLabel = 'Overlay', overlayYAxisLabel = '' }: Props = $props();
 
-	let totalPoints = $derived(
-		data.points.length + data.median.length + data.mean.length +
-		(overlay ? overlay.points.length + overlay.median.length + overlay.mean.length : 0)
-	);
+	let basePoints = $derived(data.points.length);
+	let overlayPoints = $derived(overlay ? overlay.points.length : 0);
 
 	let canvas: HTMLCanvasElement;
 	let chart: Chart | null = null;
@@ -220,7 +218,12 @@
 	</div>
 	<div class="flex justify-between items-center mt-2">
 		<div class="text-sm text-gray-600">
-			Total data points: {totalPoints.toLocaleString()}
+			Data points:
+			<span class="text-blue-600 ml-1">{label}: {basePoints.toLocaleString()}</span>
+			{#if overlay}
+				<span class="mx-2">|</span>
+				<span class="text-orange-600">{overlayLabel}: {overlayPoints.toLocaleString()}</span>
+			{/if}
 		</div>
 		<button
 			onclick={() => chart?.resetZoom()}
