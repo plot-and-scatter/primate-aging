@@ -20,7 +20,12 @@
       "Bash(npx wrangler:*)",
       "Bash(npm run build:*)",
       "Bash(npm search:*)",
-      "WebFetch(domain:www.npmjs.com)"
+      "WebFetch(domain:www.npmjs.com)",
+      "Bash(tree:*)",
+      "Bash(xargs:*)",
+      "Bash(git -C /Users/frank/Projects/active/aeon/PrimateAging log --oneline)",
+      "Bash(git -C /Users/frank/Projects/active/aeon/PrimateAging config --list)",
+      "Bash(node --version:*)"
     ]
   }
 }

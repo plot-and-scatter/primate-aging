@@ -130,7 +130,7 @@
 		const currentOverlayYAxisLabel = overlayYAxisLabel;
 
 		// Determine if we need a second y-axis (different measurements)
-		const useSecondYAxis = currentOverlay && currentOverlayYAxisLabel && currentOverlayYAxisLabel !== currentYAxisLabel;
+		const useSecondYAxis = Boolean(currentOverlay && currentOverlayYAxisLabel && currentOverlayYAxisLabel !== currentYAxisLabel);
 
 		// Do the actual work without tracking
 		untrack(() => {
@@ -160,7 +160,6 @@
 
 			if (!chart) {
 				// Create chart only once
-				console.log('Creating new chart with', currentData.points.length, 'points');
 				chart = new Chart(canvas, {
 					type: 'scatter',
 					data: { datasets },

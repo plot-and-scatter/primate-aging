@@ -6,6 +6,8 @@
 	import type { Measurement, DataPoint } from '$lib/types';
 	import { loadMeasurements, loadSubjects, type SubjectData } from '$lib/csv-utils';
 
+	const DEFAULT_SPECIES_SELECTION = 'Chimpanzee';
+
 	let measurements: Measurement[] = $state([]);
 	let selected: string = $state('');
 
@@ -61,7 +63,7 @@
 
 		// Select defaults
 		selectedFilters = {
-			species: new Set(['Chimpanzee']),
+			species: new Set([DEFAULT_SPECIES_SELECTION]),
 			sex: new Set(filterOptions.sex),
 			socialEnvironment: new Set(filterOptions.socialEnvironment),
 			housing: new Set(filterOptions.housing),
@@ -90,6 +92,11 @@
 		// Load pre-processed JSON instead of CSV
 		const jsonFilename = filename.replace('.csv', '.json');
 		const res = await fetch(`/data-optimized/${jsonFilename}`);
+		if (!res.ok) {
+			console.error(`Failed to load data file: ${res.status} ${res.statusText}`);
+			processedData = [];
+			return;
+		}
 		const data: ProcessedSubjectData[] = await res.json();
 		processedData = data;
 	}
@@ -108,6 +115,11 @@
 
 		const jsonFilename = filename.replace('.csv', '.json');
 		const res = await fetch(`/data-optimized/${jsonFilename}`);
+		if (!res.ok) {
+			console.error(`Failed to load overlay data file: ${res.status} ${res.statusText}`);
+			overlayProcessedData = [];
+			return;
+		}
 		const data: ProcessedSubjectData[] = await res.json();
 		overlayProcessedData = data;
 	}

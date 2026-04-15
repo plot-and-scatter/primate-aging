@@ -43,6 +43,9 @@ export function extractScatterData(
 
 export async function loadMeasurements(): Promise<Measurement[]> {
 	const res = await fetch('/data/measurements.csv');
+	if (!res.ok) {
+		throw new Error(`Failed to load measurements: ${res.status} ${res.statusText}`);
+	}
 	const text = await res.text();
 	const lines = text.replace(/\r/g, '').trim().split('\n');
 
@@ -75,6 +78,9 @@ export async function loadSubjects(): Promise<{
 	};
 }> {
 	const res = await fetch('/data/subjects.csv');
+	if (!res.ok) {
+		throw new Error(`Failed to load subjects: ${res.status} ${res.statusText}`);
+	}
 	const text = await res.text();
 	const lines = text.replace(/\r/g, '').trim().split('\n');
 
